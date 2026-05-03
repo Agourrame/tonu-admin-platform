@@ -66,9 +66,6 @@ interface FilterOption {
                     [loading]="loading()"
                     (onLazyLoad)="onLazyLoad($event)"
                     [rowsPerPageOptions]="[20, 50, 100]"
-                    selectionMode="single"
-                    [selection]="selectedUser()"
-                    (selectionChange)="onRowSelect($event)"
                     [rowHover]="true"
                     dataKey="id"
                     styleClass="users-table"
@@ -87,7 +84,7 @@ interface FilterOption {
                     </ng-template>
 
                     <ng-template #body let-u>
-                        <tr [class.is-blacklisted]="u.is_blacklisted">
+                        <tr [class.is-blacklisted]="u.is_blacklisted" [class.is-selected]="selectedUser()?.id === u.id" (click)="onRowSelect(u)">
                             <td class="col-user">
                                 <div class="user-cell">
                                     <div class="avatar">{{ initialsOf(u) }}</div>
@@ -257,6 +254,9 @@ interface FilterOption {
             }
             ::ng-deep .users-table .p-datatable-tbody > tr.is-blacklisted {
                 opacity: 0.7;
+            }
+            ::ng-deep .users-table .p-datatable-tbody > tr.is-selected {
+                background: rgba(36, 40, 48, 0.04);
             }
             ::ng-deep .users-table .p-paginator {
                 background: transparent;
