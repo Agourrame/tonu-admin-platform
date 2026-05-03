@@ -27,6 +27,13 @@ export class AuthService {
     private readonly _session = signal<Session | null>(null);
     private readonly _profile = signal<Profile | null>(null);
 
+    /** In-flight loadProfile dedupe. Both `bootstrap()` and the
+     *  `onAuthStateChange` listener want to populate `_profile` on init;
+     *  if they run in parallel and one times out, its null-fallback would
+     *  clobber the other's successful result. Sharing a single promise
+     *  per uid prevents that. */
+    private inflightProfileLoad: { uid: string; promise: Promise<void> } | null = null;
+
     /** Resolves once the initial `getSession()` round-trip has completed.
      *  Guards `await whenReady()` before reading `isAdmin()` so they don't
      *  race the bootstrap. */
@@ -62,12 +69,25 @@ export class AuthService {
     }
 
     private async loadProfile(uid: string): Promise<void> {
-        // Race the Supabase query against a 5s wall-clock timeout. If
-        // the network call hangs (REST endpoint unreachable, CORS preflight
-        // never completes, or no public.users row exists and the response
-        // for some reason doesn't return) we fall back to a null profile
-        // rather than blocking the whole app behind an un-resolved
-        // whenReady promise — that would freeze the entire admin shell.
+        // Dedupe — return the same promise to a parallel caller.
+        if (this.inflightProfileLoad?.uid === uid) {
+            return this.inflightProfileLoad.promise;
+        }
+        const promise = this.doLoadProfile(uid);
+        this.inflightProfileLoad = { uid, promise };
+        try {
+            await promise;
+        } finally {
+            if (this.inflightProfileLoad?.uid === uid) {
+                this.inflightProfileLoad = null;
+            }
+        }
+    }
+
+    private async doLoadProfile(uid: string): Promise<void> {
+        // Race the Supabase query against a wall-clock timeout. If the
+        // network call hangs we fall back rather than blocking whenReady
+        // forever — that would freeze the entire admin shell.
         const queryPromise = this.supabase.client
             .from('users')
             .select('*')
@@ -79,9 +99,9 @@ export class AuthService {
                 () =>
                     resolve({
                         data: null,
-                        error: { message: 'loadProfile timed out after 5s', code: 'CLIENT_TIMEOUT' }
+                        error: { message: 'loadProfile timed out after 10s', code: 'CLIENT_TIMEOUT' }
                     }),
-                5000
+                10_000
             )
         );
 
@@ -89,7 +109,11 @@ export class AuthService {
 
         if (error) {
             console.error('[auth] loadProfile failed:', error);
-            this._profile.set(null);
+            // Don't clobber a profile that landed from a parallel
+            // successful call — only clear if we still have nothing.
+            if (!this._profile()) {
+                this._profile.set(null);
+            }
             return;
         }
         this._profile.set(data);

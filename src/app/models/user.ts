@@ -22,9 +22,8 @@ export interface User {
   id: string;
   full_name: string;
   email: string;
-  phone: string;
-  /** Server-side field. Never rendered or edited from the client. */
-  password_hash: string;
+  /** Nullable to allow OAuth signups without a phone number. */
+  phone: string | null;
   avatar_url: string | null;
   role: UserRole;
   city: string | null;
@@ -32,12 +31,14 @@ export interface User {
   cin_number: string | null;
   cin_front_url: string | null;
   cin_back_url: string | null;
+  /** LEGACY — prefer `verification_status`. Kept for backfill compatibility. */
   cin_verified: boolean;
   cin_verified_at: string | null;
   license_number: string | null;
   license_front_url: string | null;
   license_back_url: string | null;
   license_expiry_date: string | null;
+  /** LEGACY — prefer `verification_status`. */
   license_verified: boolean;
   /** Categories the user holds — A / B / C / D / EB / EC / ED. */
   license_categories: string[];
@@ -54,14 +55,14 @@ export interface User {
   /** Live-captured selfie URL (signed) — forces a face-vs-CIN match at
    *  admin review time so a stolen ID alone isn't enough to pass. */
   selfie_url: string | null;
+  created_at: string;
 }
 
 export interface UserInsert {
   id?: string;
   full_name: string;
   email: string;
-  phone: string;
-  password_hash: string;
+  phone?: string | null;
   avatar_url?: string | null;
   role: UserRole;
   city?: string | null;
@@ -86,6 +87,7 @@ export interface UserInsert {
   verification_rejection_reason?: string | null;
   invite_code?: string;
   selfie_url?: string | null;
+  created_at?: string;
 }
 
 export type UserUpdate = Partial<UserInsert>;

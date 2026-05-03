@@ -1,17 +1,490 @@
-import { Component } from '@angular/core';
-import { ComingSoon } from '../_shared/coming-soon';
+import { Component, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { UsersFilter, UsersService } from '@/services/users.service';
+import { User } from '@/models/user';
+import { UserDetailDrawer } from './user-detail-drawer';
+
+interface FilterOption {
+    key: UsersFilter;
+    label: string;
+}
 
 @Component({
     selector: 'app-users',
     standalone: true,
-    imports: [ComingSoon],
+    imports: [CommonModule, FormsModule, TableModule, IconFieldModule, InputIconModule, InputTextModule, ButtonModule, UserDetailDrawer],
     template: `
-        <app-coming-soon
-            eyebrow="People"
-            title="Users"
-            description="Renters, hosts, and admins. KYC verification queue, identity moderation, role assignment, suspension."
-            icon="pi-users"
+        <div class="users-page">
+            <div class="tomo-page-titlebar tomo-anim-item">
+                <span class="tomo-eyebrow">People</span>
+                <h1 class="tomo-h1">Users</h1>
+                <p class="tomo-sub">Renters, hosts, and admins. Verify KYC, change roles, suspend abusers.</p>
+            </div>
+
+            <!-- Filters + search row -->
+            <div class="filter-row tomo-anim-item" style="animation-delay: 0.04s">
+                <div class="chips">
+                    @for (opt of filterOptions; track opt.key) {
+                        <button
+                            type="button"
+                            class="tomo-chip"
+                            [class.is-active]="filter() === opt.key"
+                            (click)="setFilter(opt.key)"
+                        >
+                            {{ opt.label }}
+                        </button>
+                    }
+                </div>
+
+                <p-iconfield class="search-field">
+                    <p-inputicon class="pi pi-search" />
+                    <input
+                        type="text"
+                        pInputText
+                        placeholder="Search by name or email…"
+                        [(ngModel)]="searchInputModel"
+                        (ngModelChange)="onSearchChange($event)"
+                        class="search-input"
+                    />
+                </p-iconfield>
+            </div>
+
+            <!-- Table card -->
+            <div class="table-card tomo-anim-item" style="animation-delay: 0.08s">
+                <p-table
+                    [value]="rows()"
+                    [lazy]="true"
+                    [paginator]="true"
+                    [rows]="pageSize()"
+                    [totalRecords]="total()"
+                    [loading]="loading()"
+                    (onLazyLoad)="onLazyLoad($event)"
+                    [rowsPerPageOptions]="[20, 50, 100]"
+                    selectionMode="single"
+                    [selection]="selectedUser()"
+                    (selectionChange)="onRowSelect($event)"
+                    [rowHover]="true"
+                    dataKey="id"
+                    styleClass="users-table"
+                    paginatorPosition="bottom"
+                    currentPageReportTemplate="{first}–{last} of {totalRecords}"
+                    [showCurrentPageReport]="true"
+                >
+                    <ng-template #header>
+                        <tr>
+                            <th class="col-user">User</th>
+                            <th class="col-role">Role</th>
+                            <th class="col-status">Verification</th>
+                            <th class="col-trust">Trust</th>
+                            <th class="col-date">Joined</th>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template #body let-u>
+                        <tr [class.is-blacklisted]="u.is_blacklisted">
+                            <td class="col-user">
+                                <div class="user-cell">
+                                    <div class="avatar">{{ initialsOf(u) }}</div>
+                                    <div class="user-meta">
+                                        <div class="user-name">
+                                            {{ u.full_name || '—' }}
+                                            @if (u.is_blacklisted) {
+                                                <span class="tomo-status is-danger">Blacklisted</span>
+                                            }
+                                        </div>
+                                        <div class="user-email">{{ u.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="col-role">
+                                <span class="role-tag" [class.role-admin]="u.role !== 'client'">
+                                    {{ u.role }}
+                                </span>
+                            </td>
+                            <td class="col-status">
+                                <span class="tomo-status" [ngClass]="statusClass(u.verification_status)">
+                                    {{ u.verification_status }}
+                                </span>
+                            </td>
+                            <td class="col-trust">
+                                @if (u.trust_score !== null) {
+                                    <div class="trust">
+                                        <i class="pi pi-star-fill"></i>
+                                        <span>{{ u.trust_score }}</span>
+                                    </div>
+                                } @else {
+                                    <span class="dim">—</span>
+                                }
+                            </td>
+                            <td class="col-date">
+                                <span class="dim-small">{{ formatDate(u.created_at) }}</span>
+                            </td>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template #emptymessage>
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty">
+                                    <div class="tomo-icon-badge is-orange is-lg">
+                                        <i class="pi pi-users"></i>
+                                    </div>
+                                    @if (search()) {
+                                        <h3>No matches</h3>
+                                        <p>No users match "{{ search() }}". Try a different search term.</p>
+                                    } @else if (filter() !== 'all') {
+                                        <h3>Nothing here</h3>
+                                        <p>No users match the "{{ activeFilterLabel() }}" filter.</p>
+                                    } @else {
+                                        <h3>No users yet</h3>
+                                        <p>If you expected to see users here, double-check the admin RLS migration ran.</p>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template #loadingbody>
+                        @for (_ of skeletonRows; track $index) {
+                            <tr>
+                                <td><div class="tomo-sk-line" style="width: 80%"></div></td>
+                                <td><div class="tomo-sk-pill" style="width: 60px"></div></td>
+                                <td><div class="tomo-sk-pill" style="width: 80px"></div></td>
+                                <td><div class="tomo-sk-line" style="width: 36px"></div></td>
+                                <td><div class="tomo-sk-line" style="width: 80px"></div></td>
+                            </tr>
+                        }
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+
+        <app-user-detail-drawer
+            [user]="selectedUser()"
+            (close)="closeDrawer()"
+            (changed)="reloadCurrent()"
         />
-    `
+    `,
+    styles: [
+        `
+            .users-page {
+                padding: 28px 28px 48px;
+                max-width: 1400px;
+            }
+            .filter-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+                margin-bottom: 18px;
+                flex-wrap: wrap;
+            }
+            .chips {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .search-field {
+                width: 320px;
+                max-width: 100%;
+            }
+            ::ng-deep .search-field .p-iconfield {
+                width: 100%;
+            }
+            ::ng-deep .search-field .p-inputicon {
+                left: 14px;
+                color: #888;
+                z-index: 1;
+            }
+            .search-input {
+                width: 100%;
+                height: 42px;
+                padding-left: 40px;
+                padding-right: 14px;
+                border-radius: 999px;
+                border: 0;
+                background: var(--tomo-bg-soft);
+                font-size: 13.5px;
+                font-weight: 500;
+                color: var(--tomo-text);
+                outline: none;
+                transition: background 200ms ease, box-shadow 200ms ease;
+            }
+            .search-input::placeholder {
+                color: var(--tomo-text-muted);
+            }
+            .search-input:focus {
+                background: #fff;
+                box-shadow: 0 0 0 1.5px var(--tomo-primary);
+            }
+            .table-card {
+                background: var(--tomo-bg-card);
+                border-radius: var(--tomo-radius-lg);
+                box-shadow: var(--tomo-shadow-card);
+                overflow: hidden;
+            }
+            ::ng-deep .users-table .p-datatable-table {
+                font-size: 13.5px;
+            }
+            ::ng-deep .users-table .p-datatable-thead > tr > th {
+                background: transparent;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.6px;
+                color: var(--tomo-text-muted);
+                border-bottom: 1px solid var(--tomo-divider);
+                padding: 14px 16px;
+            }
+            ::ng-deep .users-table .p-datatable-tbody > tr > td {
+                padding: 14px 16px;
+                border-bottom: 1px solid var(--tomo-divider);
+                color: var(--tomo-text);
+                vertical-align: middle;
+            }
+            ::ng-deep .users-table .p-datatable-tbody > tr {
+                cursor: pointer;
+                transition: background 160ms ease;
+            }
+            ::ng-deep .users-table .p-datatable-tbody > tr:hover {
+                background: var(--tomo-bg-soft);
+            }
+            ::ng-deep .users-table .p-datatable-tbody > tr.is-blacklisted {
+                opacity: 0.7;
+            }
+            ::ng-deep .users-table .p-paginator {
+                background: transparent;
+                border: 0;
+                padding: 12px 16px;
+                font-size: 12.5px;
+                color: var(--tomo-text-muted);
+            }
+            .user-cell {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .avatar {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                background: var(--tomo-primary);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12.5px;
+                font-weight: 800;
+                letter-spacing: 0.4px;
+                flex-shrink: 0;
+            }
+            .user-meta {
+                min-width: 0;
+            }
+            .user-name {
+                font-size: 13.5px;
+                font-weight: 700;
+                color: var(--tomo-text-strong);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .user-email {
+                font-size: 12px;
+                color: var(--tomo-text-muted);
+                margin-top: 2px;
+            }
+            .role-tag {
+                display: inline-flex;
+                align-items: center;
+                padding: 0 10px;
+                height: 22px;
+                border-radius: var(--tomo-radius-pill);
+                background: var(--tomo-bg-soft);
+                color: var(--tomo-text-secondary);
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: capitalize;
+                letter-spacing: 0.2px;
+            }
+            .role-tag.role-admin {
+                background: rgba(36, 40, 48, 0.08);
+                color: var(--tomo-primary);
+            }
+            .trust {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                font-weight: 700;
+            }
+            .trust i {
+                color: var(--tomo-gold);
+                font-size: 12px;
+            }
+            .dim {
+                color: var(--tomo-text-faint);
+                font-weight: 500;
+            }
+            .dim-small {
+                color: var(--tomo-text-muted);
+                font-size: 12px;
+            }
+            .empty {
+                padding: 56px 24px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+                text-align: center;
+            }
+            .empty h3 {
+                font-size: 17px;
+                font-weight: 700;
+                color: var(--tomo-text-strong);
+                margin: 4px 0 0;
+            }
+            .empty p {
+                font-size: 13.5px;
+                color: var(--tomo-text-muted);
+                max-width: 360px;
+                line-height: 1.5;
+                margin: 0;
+            }
+            .empty .tomo-icon-badge {
+                font-size: 24px;
+            }
+        `
+    ]
 })
-export class Users {}
+export class Users {
+    private usersService = inject(UsersService);
+
+    readonly filterOptions: FilterOption[] = [
+        { key: 'all', label: 'All' },
+        { key: 'pending', label: 'Pending KYC' },
+        { key: 'verified', label: 'Verified' },
+        { key: 'rejected', label: 'Rejected' },
+        { key: 'admins', label: 'Admins' },
+        { key: 'blacklisted', label: 'Blacklisted' }
+    ];
+
+    readonly skeletonRows = Array.from({ length: 6 });
+
+    // ----- table state -----
+    readonly rows = signal<User[]>([]);
+    readonly total = signal(0);
+    readonly loading = signal(false);
+    readonly page = signal(0);
+    readonly pageSize = signal(50);
+    readonly filter = signal<UsersFilter>('all');
+    readonly search = signal('');
+
+    // ----- selection -----
+    readonly selectedUser = signal<User | null>(null);
+
+    // ----- search debounce buffer -----
+    searchInputModel = '';
+    private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    readonly activeFilterLabel = computed(
+        () => this.filterOptions.find((o) => o.key === this.filter())?.label ?? ''
+    );
+
+    /**
+     * p-table fires onLazyLoad on init AND on every page/sort change.
+     * We use it as our single source of "load this slice now" trigger,
+     * so manual calls to load() are only needed after a row is mutated.
+     */
+    async onLazyLoad(event: TableLazyLoadEvent): Promise<void> {
+        const first = event.first ?? 0;
+        const rows = event.rows ?? this.pageSize();
+        this.page.set(Math.floor(first / rows));
+        this.pageSize.set(rows);
+        await this.load();
+    }
+
+    setFilter(filter: UsersFilter): void {
+        if (this.filter() === filter) return;
+        this.filter.set(filter);
+        this.page.set(0);
+        void this.load();
+    }
+
+    onSearchChange(value: string): void {
+        if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+        this.searchDebounceTimer = setTimeout(() => {
+            this.search.set(value.trim());
+            this.page.set(0);
+            void this.load();
+        }, 300);
+    }
+
+    private async load(): Promise<void> {
+        this.loading.set(true);
+        const { rows, total } = await this.usersService.list({
+            page: this.page(),
+            pageSize: this.pageSize(),
+            filter: this.filter(),
+            search: this.search()
+        });
+        this.rows.set(rows);
+        this.total.set(total);
+        this.loading.set(false);
+    }
+
+    /** Re-fetch the currently-open user so the drawer shows fresh data
+     *  after an admin action (approve / reject / role / blacklist). */
+    async reloadCurrent(): Promise<void> {
+        const cur = this.selectedUser();
+        if (!cur) return;
+        const fresh = await this.usersService.getById(cur.id);
+        if (fresh) {
+            this.selectedUser.set(fresh);
+            // Patch the row in the list too so the table reflects the change.
+            this.rows.update((list) => list.map((u) => (u.id === fresh.id ? fresh : u)));
+        }
+    }
+
+    onRowSelect(user: User | null): void {
+        this.selectedUser.set(user);
+    }
+
+    closeDrawer(): void {
+        this.selectedUser.set(null);
+    }
+
+    // ----- helpers -----
+
+    initialsOf(u: User): string {
+        const name = u.full_name?.trim();
+        if (!name) return (u.email?.[0] ?? '?').toUpperCase();
+        const parts = name.split(/\s+/).filter(Boolean);
+        if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+        return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
+    }
+
+    statusClass(status: string): string {
+        switch (status) {
+            case 'verified':
+                return 'is-success';
+            case 'pending':
+                return 'is-warning';
+            case 'rejected':
+                return 'is-danger';
+            default:
+                return 'is-muted';
+        }
+    }
+
+    formatDate(iso: string | null | undefined): string {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+}
