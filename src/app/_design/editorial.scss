@@ -1,0 +1,100 @@
+// ============================================================================
+// Editorial typography — "claude design"
+// ============================================================================
+// The eyebrow + h1 + sub pattern is used at the top of every admin page.
+// Keep all admin pages on this scale — don't introduce ad-hoc heading sizes.
+// ============================================================================
+
+@use './tokens' as *;
+
+.tomo-page-titlebar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+
+.tomo-eyebrow {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: $tomo-secondary;
+  margin: 0;
+}
+
+.tomo-h1 {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: $tomo-text-strong;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.tomo-sub {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: $tomo-text-muted;
+  margin: 0;
+  line-height: 1.45;
+}
+
+// Section field label inside a card or form
+.tomo-field-label {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: $tomo-text-strong;
+  margin-bottom: 12px;
+}
+
+// Smaller label above an input
+.tomo-sub-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: $tomo-text-secondary;
+  margin-bottom: 6px;
+}
+
+// Section header row (label + optional action button on the right)
+.tomo-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+
+  .tomo-field-label { margin-bottom: 0; }
+
+  .tomo-section-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: $tomo-secondary;
+    font-size: 13px;
+    font-weight: 600;
+  }
+}
+
+// Stat/KPI tile typography
+.tomo-stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: $tomo-text-strong;
+  line-height: 1;
+}
+
+.tomo-stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: $tomo-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-top: 6px;
+}

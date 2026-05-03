@@ -1,6 +1,6 @@
 {
-    "name": "apollo-ng",
-    "version": "19.0.0",
+    "name": "tomo-admin",
+    "version": "0.1.0",
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
@@ -20,6 +20,7 @@
         "@angular/platform-browser-dynamic": "^19.0.0",
         "@angular/router": "^19.0.0",
         "@primeng/themes": "^19.0.2",
+        "@supabase/supabase-js": "^2.104.0",
         "chart.js": "4.4.2",
         "primeclt": "^0.1.5",
         "primeicons": "^7.0.0",

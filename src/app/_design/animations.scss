@@ -1,0 +1,62 @@
+// ============================================================================
+// Entrance + skeleton animations — "claude design"
+// ============================================================================
+
+@use './tokens' as *;
+
+// ----- Entrance (page sections fade in with vertical lift) -----
+@keyframes tomoFadeSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tomo-anim-item {
+  animation: tomoFadeSlideUp $tomo-duration-slow $tomo-easing both;
+}
+
+// Stagger direct children of a container by 50ms each (up to 12 items)
+.tomo-anim-stagger > * {
+  animation: tomoFadeSlideUp $tomo-duration-slow $tomo-easing both;
+
+  @for $i from 1 through 12 {
+    &:nth-child(#{$i}) { animation-delay: #{($i - 1) * 0.05}s; }
+  }
+}
+
+// ----- Shimmer skeleton -----
+@keyframes tomoShimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+.tomo-shimmer {
+  background: linear-gradient(90deg, $tomo-divider 25%, #e6e6e6 50%, $tomo-divider 75%);
+  background-size: 1200px 100%;
+  animation: tomoShimmer 1.5s infinite linear;
+  border-radius: var(--tomo-radius);
+}
+
+// Skeleton primitives (different shapes, all share the shimmer)
+.tomo-sk-line {
+  @extend .tomo-shimmer;
+  height: 14px;
+}
+.tomo-sk-pill {
+  @extend .tomo-shimmer;
+  height: 24px;
+  border-radius: var(--tomo-radius-pill);
+}
+.tomo-sk-block {
+  @extend .tomo-shimmer;
+  border-radius: var(--tomo-radius-lg);
+}
+.tomo-sk-circle {
+  @extend .tomo-shimmer;
+  border-radius: 50%;
+}
+
+// ----- Press / tap micro-interaction -----
+.tomo-press {
+  transition: transform var(--tomo-duration-fast) ease;
+  &:active { transform: scale(0.99); }
+}

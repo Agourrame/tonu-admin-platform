@@ -1,0 +1,286 @@
+// ============================================================================
+// TOMO design tokens — "claude design"
+// ============================================================================
+// Use as SCSS variables in component styles:
+//   @use 'src/app/_design/tokens' as *;
+//   .my-thing { color: $tomo-primary; }
+//
+// Or as CSS custom properties anywhere:
+//   color: var(--tomo-primary);
+// ============================================================================
+
+@use 'sass:color';
+
+// === BRAND PALETTE ===
+$tomo-primary:        #242830;   // slate dark — primary text, buttons, HUD
+$tomo-primary-soft:   #2e323b;   // slate hover
+$tomo-primary-deep:   #050608;   // splash bg, very dark surface
+$tomo-secondary:      #e27a34;   // brand orange — accents, eyebrow, "verified" badges, CTAs
+$tomo-secondary-soft: #ed8c4a;
+$tomo-secondary-deep: #c96a2a;   // orange active state
+
+// === SURFACES ===
+$tomo-bg:        #fafafa;        // page bg
+$tomo-bg-card:   #ffffff;        // card surface
+$tomo-bg-soft:   #f5f6f8;        // input fills, subtle bg
+$tomo-bg-softer: #f3f4f6;        // chip bg, hover
+
+// === DIVIDERS / BORDERS ===
+$tomo-divider:      #f0f0f0;
+$tomo-border:       #e8e8e8;
+$tomo-border-soft:  #ebebeb;
+$tomo-border-input: #e2e4e8;
+
+// === TEXT ===
+$tomo-text:           #1a1a1a;
+$tomo-text-strong:    #000000;
+$tomo-text-secondary: #444444;
+$tomo-text-muted:     #888888;
+$tomo-text-faint:     #999999;
+$tomo-text-faintest:  #aaaaaa;
+
+// === SEMANTIC (status colors) ===
+$tomo-success:       #1aaa55;    // verified, active, paid
+$tomo-warning:       #f59e0b;    // pending review
+$tomo-danger:        #e53935;    // rejected, suspended, failed
+$tomo-danger-soft:   #ea4335;    // location red on maps
+$tomo-info:          #3b82f6;    // info / informational
+$tomo-gold:          #fbbf24;    // star ratings
+
+// === RADIUS ===
+$tomo-radius-sm:   8px;
+$tomo-radius:      10px;
+$tomo-radius-md:   12px;
+$tomo-radius-lg:   14px;         // cards
+$tomo-radius-xl:   20px;         // chips
+$tomo-radius-pill: 999px;
+
+// === SHADOWS ===
+// THE card shadow — used on every card across the app.
+$tomo-shadow-card:    rgba(0, 0, 0, 0.03) 0px 1px 4px 0px, rgba(27, 31, 35, 0.12) 0px 0px 0px 1px;
+$tomo-shadow-overlay: 0 8px 32px rgba(0, 0, 0, 0.12);
+$tomo-shadow-press:   rgba(0, 0, 0, 0.04) 0px 1px 4px 0px, rgba(27, 31, 35, 0.06) 0px 0px 0px 1px;
+
+// === ANIMATION ===
+$tomo-easing:         cubic-bezier(0.25, 0.46, 0.45, 0.94);
+$tomo-duration-fast:  200ms;
+$tomo-duration:       320ms;
+$tomo-duration-slow:  420ms;
+
+// === SPACING ===
+$tomo-space-1: 4px;
+$tomo-space-2: 8px;
+$tomo-space-3: 12px;
+$tomo-space-4: 16px;
+$tomo-space-5: 20px;
+$tomo-space-6: 24px;
+$tomo-space-8: 32px;
+
+// === Z-INDEX ===
+$tomo-z-modal:   1000;
+$tomo-z-overlay: 900;
+$tomo-z-sticky:  100;
+
+// ============================================================================
+// CSS CUSTOM PROPERTIES
+// ============================================================================
+
+:root {
+  --tomo-primary:        #{$tomo-primary};
+  --tomo-primary-soft:   #{$tomo-primary-soft};
+  --tomo-primary-deep:   #{$tomo-primary-deep};
+  --tomo-secondary:      #{$tomo-secondary};
+  --tomo-secondary-soft: #{$tomo-secondary-soft};
+  --tomo-secondary-deep: #{$tomo-secondary-deep};
+
+  --tomo-bg:        #{$tomo-bg};
+  --tomo-bg-card:   #{$tomo-bg-card};
+  --tomo-bg-soft:   #{$tomo-bg-soft};
+  --tomo-bg-softer: #{$tomo-bg-softer};
+
+  --tomo-divider:      #{$tomo-divider};
+  --tomo-border:       #{$tomo-border};
+  --tomo-border-soft:  #{$tomo-border-soft};
+  --tomo-border-input: #{$tomo-border-input};
+
+  --tomo-text:           #{$tomo-text};
+  --tomo-text-strong:    #{$tomo-text-strong};
+  --tomo-text-secondary: #{$tomo-text-secondary};
+  --tomo-text-muted:     #{$tomo-text-muted};
+  --tomo-text-faint:     #{$tomo-text-faint};
+
+  --tomo-success: #{$tomo-success};
+  --tomo-warning: #{$tomo-warning};
+  --tomo-danger:  #{$tomo-danger};
+  --tomo-info:    #{$tomo-info};
+  --tomo-gold:    #{$tomo-gold};
+
+  --tomo-radius-sm:   #{$tomo-radius-sm};
+  --tomo-radius:      #{$tomo-radius};
+  --tomo-radius-md:   #{$tomo-radius-md};
+  --tomo-radius-lg:   #{$tomo-radius-lg};
+  --tomo-radius-xl:   #{$tomo-radius-xl};
+  --tomo-radius-pill: #{$tomo-radius-pill};
+
+  --tomo-shadow-card:    #{$tomo-shadow-card};
+  --tomo-shadow-overlay: #{$tomo-shadow-overlay};
+  --tomo-shadow-press:   #{$tomo-shadow-press};
+
+  --tomo-easing:        #{$tomo-easing};
+  --tomo-duration-fast: #{$tomo-duration-fast};
+  --tomo-duration:      #{$tomo-duration};
+  --tomo-duration-slow: #{$tomo-duration-slow};
+}
+
+// ============================================================================
+// UTILITY CLASSES — "claude design" reusables
+// ============================================================================
+
+// --- Card shell ---
+// Every card across the admin uses this.
+.tomo-card {
+  background: var(--tomo-bg-card);
+  border-radius: var(--tomo-radius-lg);
+  box-shadow: var(--tomo-shadow-card);
+  overflow: hidden;
+}
+
+.tomo-card-padded {
+  @extend .tomo-card;
+  padding: 20px;
+}
+
+// --- Status pills ---
+// Shared status indicators for verification_status, agency.status,
+// reservation.status, payment.status, etc.
+.tomo-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--tomo-radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1;
+
+  &.is-success { background: rgba($tomo-success, 0.12); color: $tomo-success; }
+  &.is-warning { background: rgba($tomo-warning, 0.12); color: $tomo-warning; }
+  &.is-danger  { background: rgba($tomo-danger,  0.12); color: $tomo-danger; }
+  &.is-info    { background: rgba($tomo-info,    0.12); color: $tomo-info; }
+  &.is-muted   { background: $tomo-bg-soft; color: $tomo-text-muted; }
+  &.is-brand   { background: rgba($tomo-secondary, 0.12); color: $tomo-secondary; }
+}
+
+// --- Soft-tinted icon badge ---
+// 44×44 rounded square with translucent bg + full-color icon.
+// Used for category icons, section indicators, KPI cards.
+.tomo-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+
+  &.is-orange { background: rgba($tomo-secondary, 0.12); color: $tomo-secondary; }
+  &.is-blue   { background: rgba($tomo-info,      0.12); color: $tomo-info; }
+  &.is-green  { background: rgba($tomo-success,   0.12); color: $tomo-success; }
+  &.is-red    { background: rgba($tomo-danger,    0.12); color: $tomo-danger; }
+  &.is-gold   { background: rgba($tomo-gold,      0.16); color: $tomo-gold; }
+  &.is-slate  { background: rgba($tomo-primary,   0.06); color: $tomo-primary; }
+
+  &.is-lg { width: 56px; height: 56px; border-radius: 14px; font-size: 26px; }
+  &.is-sm { width: 36px; height: 36px; border-radius: 10px; font-size: 18px; }
+}
+
+// --- Filter chip (text-only, no icons per design system) ---
+.tomo-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  background: $tomo-bg-softer;
+  border: 1.5px solid $tomo-border-input;
+  border-radius: var(--tomo-radius-xl);
+  font-size: 13px;
+  font-weight: 600;
+  color: $tomo-primary;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--tomo-duration-fast) ease, color var(--tomo-duration-fast) ease;
+
+  &:hover { background: color.adjust($tomo-bg-softer, $lightness: -2%); }
+  &.is-active {
+    background: $tomo-primary;
+    color: #fff;
+    border-color: $tomo-primary;
+  }
+}
+
+// --- Page divider ---
+.tomo-divider {
+  height: 1px;
+  background: $tomo-divider;
+  margin: 20px 0;
+  border: 0;
+}
+
+// --- Pill CTA button (58px, used on auth/hero) ---
+.tomo-pill-cta {
+  height: 58px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: var(--tomo-radius-pill);
+  background: $tomo-primary;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--tomo-duration-fast) ease, transform var(--tomo-duration-fast) ease;
+
+  &:hover:not(:disabled) { background: $tomo-primary-soft; }
+  &:active:not(:disabled) { transform: scale(0.99); }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  &.is-light {
+    background: #fff;
+    color: $tomo-primary;
+    box-shadow: var(--tomo-shadow-press);
+    &:hover:not(:disabled) { background: #fff; }
+  }
+
+  &.is-orange {
+    background: $tomo-secondary;
+    &:hover:not(:disabled) { background: $tomo-secondary-soft; }
+  }
+}
+
+// --- Pill text input (auth shell, search bars) ---
+.tomo-pill-input {
+  height: 56px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--tomo-radius-pill);
+  background: $tomo-bg-soft;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: $tomo-text;
+  outline: none;
+  transition: background var(--tomo-duration-fast) ease, box-shadow var(--tomo-duration-fast) ease;
+
+  &::placeholder { color: $tomo-text-muted; }
+
+  &:focus {
+    background: #fff;
+    box-shadow: 0 0 0 1.5px $tomo-primary;
+  }
+
+  &.with-icon { padding-left: 50px; }
+  &.with-action { padding-right: 50px; }
+}

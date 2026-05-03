@@ -1,64 +1,71 @@
 import { Routes } from '@angular/router';
 import { AppLayout } from '@/layout/components/app.layout';
-import { Landing } from '@/pages/landing/landing';
 import { Notfound } from '@/pages/notfound/notfound';
+import { adminGuard } from '@/guards/admin.guard';
+import { redirectIfAuthedGuard } from '@/guards/redirect-if-authed.guard';
 
 export const appRoutes: Routes = [
     {
         path: '',
         component: AppLayout,
+        canActivate: [adminGuard],
         children: [
             {
                 path: '',
-                loadComponent: () => import('./app/pages/dashboards/ecommercedashboard').then(c => c.EcommerceDashboard),
-                data: { breadcrumb: 'E-Commerce Dashboard' },
+                loadComponent: () => import('@/pages/dashboard/dashboard').then(c => c.Dashboard),
+                data: { breadcrumb: 'Dashboard' },
             },
             {
-                path: 'dashboard-banking',
-                loadComponent: () => import('./app/pages/dashboards/bankingdashboard').then(c => c.BankingDashboard),
-                data: { breadcrumb: 'Banking Dashboard' },
+                path: 'users',
+                loadComponent: () => import('@/pages/users/users').then(c => c.Users),
+                data: { breadcrumb: 'Users' },
             },
             {
-                path: 'uikit',
-                data: { breadcrumb: 'UI Kit' },
-                loadChildren: () => import('@/pages/uikit/uikit.routes'),
+                path: 'agencies',
+                loadComponent: () => import('@/pages/agencies/agencies').then(c => c.Agencies),
+                data: { breadcrumb: 'Agencies' },
             },
             {
-                path: 'documentation',
-                data: { breadcrumb: 'Documentation' },
-                loadComponent: () => import('./app/pages/documentation/documentation').then(c => c.Documentation)
+                path: 'vehicles',
+                loadComponent: () => import('@/pages/vehicles/vehicles').then(c => c.Vehicles),
+                data: { breadcrumb: 'Vehicles' },
             },
             {
-                path: 'pages',
-                loadChildren: () => import('@/pages/pages.routes'),
+                path: 'reservations',
+                loadComponent: () => import('@/pages/reservations/reservations').then(c => c.Reservations),
+                data: { breadcrumb: 'Reservations' },
             },
             {
-                path: 'apps',
-                loadChildren: () => import('@/apps/apps.routes'),
-                data: { breadcrumb: 'Apps' },
-            },
-
-            {
-                path: 'blocks',
-                data: { breadcrumb: 'Free Blocks' },
-                loadChildren: () => import('./app/pages/blocks/blocks.routes')
+                path: 'payments',
+                loadComponent: () => import('@/pages/payments/payments').then(c => c.Payments),
+                data: { breadcrumb: 'Payments' },
             },
             {
-                path: 'ecommerce',
-                loadChildren: () =>
-                    import('@/pages/ecommerce/ecommerce.routes'),
-                data: { breadcrumb: 'E-Commerce' },
+                path: 'reviews',
+                loadComponent: () => import('@/pages/reviews/reviews').then(c => c.Reviews),
+                data: { breadcrumb: 'Reviews' },
             },
             {
-                path: 'profile',
-                loadChildren: () => import('@/pages/usermanagement/usermanagement.routes'),
+                path: 'plans',
+                loadComponent: () => import('@/pages/plans/plans').then(c => c.Plans),
+                data: { breadcrumb: 'Subscription plans' },
+            },
+            {
+                path: 'help-articles',
+                loadComponent: () => import('@/pages/help-articles/help-articles').then(c => c.HelpArticles),
+                data: { breadcrumb: 'Help articles' },
+            },
+            {
+                path: 'platform-config',
+                loadComponent: () => import('@/pages/platform-config/platform-config').then(c => c.PlatformConfig),
+                data: { breadcrumb: 'Platform config' },
             },
         ],
     },
-    { path: 'landing', component: Landing },
     { path: 'notfound', component: Notfound },
     {
         path: 'auth',
+        canActivate: [redirectIfAuthedGuard],
         loadChildren: () => import('@/pages/auth/auth.routes'),
     },
     { path: '**', redirectTo: '/notfound' },
