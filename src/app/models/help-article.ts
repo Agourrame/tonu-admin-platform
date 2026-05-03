@@ -30,3 +30,19 @@ export interface HelpArticle {
   updated_at: string;
   created_at: string;
 }
+
+export interface HelpArticleInsert {
+  id?: string;
+  slug: string;
+  title: string;
+  summary?: string | null;
+  body: string;
+  category: HelpArticleCategory;
+  icon?: string | null;
+  sort_order?: number;
+  is_published?: boolean;
+  updated_at?: string;
+  created_at?: string;
+}
+
+export type HelpArticleUpdate = Partial<HelpArticleInsert>;
